@@ -1,0 +1,13 @@
+{
+  "name": "sbox_slack_bolt",
+  "version": "0.0.0",
+  "main": "app.js",
+  "scripts": {
+    "ngrok": "ngrok http 3000",
+    "start": "node app.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@slack/bolt": "^3.4.0"
+  }
+}

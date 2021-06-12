@@ -1,0 +1,17 @@
+{
+  "name": "node",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "remoteUser": "vscode",
+  "remoteEnv": {
+    "PATH":"/workspace/.devcontainer/bin:${containerEnv:PATH}"
+  },
+  "postCreateCommand": ".devcontainer/bin/initial_setup",
+  "settings": {
+    "editor.codeActionsOnSave": {
+      "source.fixAll": true
+    },
+    "remote.autoForwardPorts": false
+  }
+}
