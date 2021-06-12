@@ -1,15 +1,62 @@
-const { App } = require('@slack/bolt');
+const { App, ExpressReceiver } = require('@slack/bolt');
+const serverlessExpress = require('@vendia/serverless-express');
 
-const app = new App({
+// Initialize your custom receiver
+const expressReceiver = new ExpressReceiver({
   signingSecret: process.env.SLACK_SIGNING_SECRET,
-  token: process.env.SLACK_BOT_TOKEN,
+  // The `processBeforeResponse` option is required for all FaaS environments.
+  // It allows Bolt methods (e.g. `app.message`) to handle a Slack request
+  // before the Bolt framework responds to the request (e.g. `ack()`). This is
+  // important because FaaS immediately terminate handlers after the response.
+  processBeforeResponse: true
 });
 
-/* Add functionality here */
+// Initializes your app with your bot token and the AWS Lambda ready receiver
+const app = new App({
+  token: process.env.SLACK_BOT_TOKEN,
+  receiver: expressReceiver
+});
 
-(async () => {
-  // Start the app
-  await app.start(process.env.PORT || 3000);
+// Listens to incoming messages that contain "hello"
+app.message('hello', async ({ message, say }) => {
+  // say() sends a message to the channel where the event was triggered
+  await say({
+    blocks: [
+      {
+        "type": "section",
+        "text": {
+          "type": "mrkdwn",
+          "text": `Hey there <@${message.user}>!`
+        },
+        "accessory": {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "Click Me"
+          },
+          "action_id": "button_click"
+        }
+      }
+    ],
+    text: `Hey there <@${message.user}>!`
+  });
+});
 
-  console.log('⚡️ Bolt app is running!');
-})();
+// Listens for an action from a button click
+app.action('button_click', async ({ body, ack, say }) => {
+  await say(`<@${body.user.id}> clicked the button`);
+
+  // Acknowledge the action after say() to exit the Lambda process
+  await ack();
+});
+
+// Listens to incoming messages that contain "goodbye"
+app.message('goodbye', async ({ message, say }) => {
+  // say() sends a message to the channel where the event was triggered
+  await say(`See ya later, <@${message.user}> :wave:`);
+});
+
+// Handle the Lambda function event
+module.exports.handler = serverlessExpress({
+  app: expressReceiver.app
+});
